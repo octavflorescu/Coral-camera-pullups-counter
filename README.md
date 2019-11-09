@@ -1,3 +1,19 @@
+# Fork from google-coral
+
+This repo contains a fork of Google-coral's exemple projects from which i have deviated a program which identifies faces.
+The scope of the app is to track how many pull-ups does each team member do.
+The camera will be mounted on a pull-up bar. So it will see only faces of those who did a pullup.
+
+## Implementation
+
+Used Gstreamer to receive images.
+Used Face detector to identify faces on each received image.
+If any face is found, start a video session, until X (5-for now) seconds have passed without seeing any face.
+Count the **face is found** <-> **face is not found** transitions in order to get the count of all pullups.
+Use Face detector's output to crop faces and classify between team members.
+Save the classified team memeber's name, date, number of pullups, and evidence location (the video) to a csv.
+
+# -- Google Coral --
 # Edge TPU simple camera examples
 
 This repo contains a collection of examples that use camera streams
