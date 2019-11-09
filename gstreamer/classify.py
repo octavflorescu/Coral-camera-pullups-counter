@@ -13,87 +13,150 @@
 # limitations under the License.
 
 """A demo which runs object classification on camera frames."""
-import argparse
-import time
 import re
-import svgwrite
 import imp
 import os
-import cv2
-from edgetpu.classification.engine import ClassificationEngine
+# from edgetpu.classification.engine import ClassificationEngine
 import gstreamer
 import numpy
 import signal
+from PIL import Image
+from PIL import ImageDraw, ImageFont
+from typing import Tuple, Union
 
-def load_labels(path):
-    p = re.compile(r'\s*(\d+)(.+)')
-    with open(path, 'r', encoding='utf-8') as f:
-       lines = (p.match(line).groups() for line in f.readlines())
-       return {int(num): text.strip() for num, text in lines}
+try:
+    from .VideoWriter import *
+    from .FaceDetector import *
+except Exception:  # ImportError
+    from VideoWriter import *
+    from FaceDetector import *
 
-def generate_svg(dwg, text_lines):
-    for y, line in enumerate(text_lines):
-        dwg.add(dwg.text(line, insert=(11, y*20+1), fill='black', font_size='20'))
-        dwg.add(dwg.text(line, insert=(10, y*20), fill='white', font_size='20'))
+class CONSTANTS:
+    # number of seconds that need to pass after which the video recording is stopped and the video saved to disk
+    NO_FACE_THRESHOLD_SEC = 5 # seconds
+    # number of seconds that need to pass for a pullup to be considered valid
+    # scope: false positive counts removal
+    MIN_SEC_PER_PULLUP = 1
 
-def sigint_handler(signum, frame):
-    stopVideo()
+    class RECORD_STATUS:
+        OFF, JUST_STARTED, ON, JUST_STOPPED, *_ = range(10)
+        POSITIVE_STATS = [JUST_STARTED, ON]
+        NEGATIVE_STATS = [JUST_STOPPED, OFF]
 
-video_name = 'video.mpg'
-video = cv2.VideoWriter(video_name,
-                        cv2.VideoWriter_fourcc('M','P','E','G'),
-                        30.0,
-                        (320, 240),
-                        True)
-signal.signal(signal.SIGINT, sigint_handler)
+    SAVE_FILE_NAME = "db.csv"
 
-def stopVideo():
-    video.release()
-    print('Closed')
-    cv2.destroyAllWindows()
+class Main:
+    def __init__(self):
+        # self.t0 = time.time()  # timer used for debugging the video's fps
+        signal.signal(signal.SIGINT, self.sigint_handler)
+        # reduce the video fps since the Coral's processing slows down the counting
+        # POSSIBLE alternative solution: first save the videos, nightly - process them.
+        self.video_writer = VideoWriter(output_path='/home/mendel/mnt/resources/videos',
+                                        fps=15.0)
+        self.recording_last_face_seen_timestamp = 0
+
+        self.face_detector = FaceDetector(model_path='/home/mendel/mnt/cameraSamples/examples-camera/all_models/mobilenet_ssd_v2_face_quant_postprocess_edgetpu.tflite')
+
+        self.who = None
+        self.counter = 0
+        self.counter_up_down = False  # on off switch. False for human not visible (thus-down). True for face up.
+        self.counting_prev_face_seen_timestamp = 0
+
+    def _record(self, image, face_rois_in_image: List[List[int]]) -> Tuple[CONSTANTS.RECORD_STATUS, Union[None, str]]:
+        seeing_a_face = len(face_rois_in_image) > 0
+
+        if self.video_writer.is_video_recording_in_progress():
+            # print("{}".format(time.time() - self.t0))  # timer used for debugging the video's fps
+            # self.t0 = time.time()  # timer used for debugging the video's fps
+            self.video_writer.add_image(numpy.array(image))
+
+            if time.time() - self.recording_last_face_seen_timestamp >= CONSTANTS.NO_FACE_THRESHOLD_SEC:
+                video_path = self.video_writer.video_name  # create a backup since stop_video_recording messes this up
+                self.video_writer.stop_video_recording()
+                self.recording_last_face_seen_timestamp = 0
+                return CONSTANTS.RECORD_STATUS.JUST_STOPPED, video_path
+
+            if seeing_a_face:
+                self.recording_last_face_seen_timestamp = time.time()
+                self.video_writer.save_image_at_same_path(numpy.array(image.crop(face_rois_in_image[0])))
+
+            return CONSTANTS.RECORD_STATUS.ON, self.video_writer.video_name
+
+        elif seeing_a_face:
+            self.recording_last_face_seen_timestamp = time.time()
+            self.video_writer.start_video_recording(numpy.array(image))
+            self.video_writer.save_image_at_same_path(numpy.array(image.crop(face_rois_in_image[0])))
+            return CONSTANTS.RECORD_STATUS.JUST_STARTED, self.video_writer.video_name
+
+        return CONSTANTS.RECORD_STATUS.OFF, None
+
+    def _count(self, face_rois_in_image: List[List[int]]) -> int:
+        seeing_a_face = len(face_rois_in_image) > 0
+
+        # if seeing a face and was not seeing a face before
+        if seeing_a_face and not self.counter_up_down:
+            self.counter_up_down = True  # up
+
+            # if at least MIN_SEC_PER_PULLUP have passed, it means there was a pullup done
+            # and the coral camera did not just lose focus
+            if time.time() - self.counting_prev_face_seen_timestamp >= CONSTANTS.MIN_SEC_PER_PULLUP:
+                self.counting_prev_face_seen_timestamp = time.time()
+                self.counter += 1
+
+        elif not seeing_a_face:
+            self.counter_up_down = False  # down
+
+        return self.counter
+
+    def _whothis(self, image_of_face: Image) -> str:
+        return "Octav"
+
+    def _write_number_on_photo(self, image: Image, number: int):
+        ImageDraw.Draw(image).text((10, 8),
+                                   text=str(number),
+                                   fill=(255, 0, 0),
+                                   font=ImageFont.truetype(font="OpenSans.ttf", size=24))
+
+    def _save(self, who: str, pullup_counts: int, evidence_path: str):
+        with open(CONSTANTS.SAVE_FILE_NAME, "a+") as track_file:
+            # when,who,how_many,evidence
+            track_file.write('{},{},{},{}\n'.format(time.time(), who, pullup_counts, evidence_path))
+
+    def _reset_session(self):
+        self.counter = 0
+        self.who = None
+
+    def _callback(self, image, svg_canvas):
+        face_rois_in_image = self.face_detector.predict(image)
+
+        counts = self._count(face_rois_in_image=face_rois_in_image)
+        self._write_number_on_photo(image, number=counts)
+
+        record_status, video_path = self._record(image=image,
+                                                 face_rois_in_image=face_rois_in_image)
+
+        if len(face_rois_in_image) > 0:
+            # TODO: ENSEMBLE predictions eventually
+            self.who = self._whothis(image_of_face=image.crop(face_rois_in_image[0]))
+
+        if record_status == CONSTANTS.RECORD_STATUS.JUST_STOPPED:
+            self._save(who=self.who,
+                       pullup_counts=self.counter,
+                       evidence_path=video_path)
+            self._reset_session()
+
+
+    def sigint_handler(self, signum, frame):
+        self.video_writer.stop_video_recording()
+
+    def start(self):
+        _ = gstreamer.run_pipeline(self._callback, appsink_size=(320, 240))
+        self.video_writer.stop_video_recording()
+
 
 def main():
-    default_model_dir = "../all_models"
-    default_model = 'mobilenet_v2_1.0_224_quant_edgetpu.tflite'
-    default_labels = 'imagenet_labels.txt'
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--model', help='.tflite model path',
-                        default=os.path.join(default_model_dir,default_model))
-    parser.add_argument('--labels', help='label file path',
-                        default=os.path.join(default_model_dir, default_labels))
-    parser.add_argument('--top_k', type=int, default=3,
-                        help='number of classes with highest score to display')
-    parser.add_argument('--threshold', type=float, default=0.1,
-                        help='class score threshold')
-    args = parser.parse_args()
-
-    last_time = time.monotonic()
-    def user_callback(image, svg_canvas):
-        nonlocal last_time
-        start_time = time.monotonic()
-        image.save('out.bmp')
-        #      print(image.size)
-        #open_cv_image = numpy.array(image.convert('RGB'))
-        open_cv_image = cv2.cvtColor(numpy.array(image), cv2.COLOR_RGB2BGR)
-        #cv2.imshow('frame', open_cv_image)
-
-        video.write(open_cv_image)
-        # print('of pic: ', open_cv_image, 'of initial pic: ', numpy.array(image))
-        #video.release()
-        #      results = engine.ClassifyWithImage(image, threshold=args.threshold, top_k=args.top_k)
-        end_time = time.monotonic()
-        text_lines = [
-          'Inference: %.2f ms' %((end_time - start_time) * 1000),
-          'FPS: %.2f fps' %(1.0/(end_time - last_time)),
-        ]
-        #      for index, score in results:
-        #        text_lines.append('score=%.2f: %s' % (score, labels[index]))
-        #      print(' '.join(text_lines))
-        last_time = end_time
-        generate_svg(svg_canvas, text_lines)
-
-    result = gstreamer.run_pipeline(user_callback, appsink_size=(320,240))
-    stopVideo()
+    mainObject = Main()
+    mainObject.start()
 
 if __name__ == '__main__':
     main()
