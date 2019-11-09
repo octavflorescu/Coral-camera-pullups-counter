@@ -7,9 +7,10 @@ The camera will be mounted on a pull-up bar. So it will see only faces of those 
 ## Hardware - the case
 
 I have printed [this](https://www.thingiverse.com/thing:3561461).
+![Resulting in this](IMG_4320_low.jpg)
 Made a system to be able to change the angle of the camera.
 And its height.
-![Image of the coral case]()
+![Image of the coral case](IMG_5646_low.jpg)
 
 ## Internal Env
 
