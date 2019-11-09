@@ -6,12 +6,12 @@ The camera will be mounted on a pull-up bar. So it will see only faces of those 
 
 ## Implementation
 
-Used Gstreamer to receive images.
-Used Face detector to identify faces on each received image.
-If any face is found, start a video session, until X (5-for now) seconds have passed without seeing any face.
-Count the **face is found** <-> **face is not found** transitions in order to get the count of all pullups.
-Use Face detector's output to crop faces and classify between team members.
-Save the classified team memeber's name, date, number of pullups, and evidence location (the video) to a csv.
+1. Used Gstreamer to receive images.
+2. Used Face detector to identify faces on each received image.
+3. If any face is found, start a video session, until X (5-for now) seconds have passed without seeing any face.
+4. Count the **face is found** <-> **face is not found** transitions in order to get the count of all pullups.
+5. *Use Face detector's output to crop faces and classify between team members.* TO BE DONE
+6. Save the classified team memeber's name, date, number of pullups, and evidence location (the video) to a csv.
 
 # -- Google Coral --
 # Edge TPU simple camera examples
