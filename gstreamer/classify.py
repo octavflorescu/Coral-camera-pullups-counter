@@ -36,7 +36,7 @@ class CONSTANTS:
     NO_FACE_THRESHOLD_SEC = 5 # seconds
     # number of seconds that need to pass for a pullup to be considered valid
     # scope: false positive counts removal
-    MIN_SEC_PER_PULLUP = 1
+    MIN_SEC_PER_PULLUP = 1.0
 
     class RECORD_STATUS:
         OFF, JUST_STARTED, ON, JUST_STOPPED, *_ = range(10)
