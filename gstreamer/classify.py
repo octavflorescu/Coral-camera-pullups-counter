@@ -109,7 +109,7 @@ class Main:
         return self.counter
 
     def _whothis(self, image_of_face: Image) -> str:
-        return "Octav"
+        return "???"
 
     def _write_number_on_photo(self, image: Image, number: int):
         ImageDraw.Draw(image).text((10, 8),
