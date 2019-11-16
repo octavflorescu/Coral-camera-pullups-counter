@@ -26,7 +26,7 @@ Make sure to have the latest edgetpu version. [atm](https://coral.withgoogle.com
 6. Save the classified team memeber's name, date, number of pullups, and evidence location (the video) to a csv.
 
 ## Result:
-<img src="IMG_5658_low.jpg" width="33%"> <img src="IMG_5656_low.jpg" width="33%">
+<img src="IMG_5658_low.JPG" width="33%"> <img src="IMG_5656_low.JPG" width="33%">
 
 # -- Google Coral --
 # Edge TPU simple camera examples
