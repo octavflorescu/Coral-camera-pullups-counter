@@ -4,6 +4,7 @@ import sys
 import os
 sys.path.append(os.path.abspath('/home/mendel/mnt/cameraSamples/examples-camera/gstreamer'))
 from definitions import CONSTANTS
+import datetime
 
 app = Flask(__name__, static_folder='static')
 
@@ -13,6 +14,9 @@ app = Flask(__name__, static_folder='static')
 def result():
     if os.path.exists(CONSTANTS.db_path):
         hist_df = pd.read_csv(CONSTANTS.db_path, names=CONSTANTS.PullupsHistoryColumns.all_ordered)
+        hist_df[CONSTANTS.PullupsHistoryColumns.WHEN] = hist_df[CONSTANTS.PullupsHistoryColumns.WHEN].apply(
+            lambda x: datetime.datetime.fromtimestamp(x).strftime("%Y-%m-%d %H:%M")
+        )
         hist_df[CONSTANTS.PullupsHistoryColumns.EVIDENCE] = hist_df[CONSTANTS.PullupsHistoryColumns.EVIDENCE].apply(lambda x: x.split('/')[-2])
         hist_list = hist_df.values.tolist()
         print(hist_df.shape)
