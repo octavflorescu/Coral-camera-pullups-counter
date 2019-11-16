@@ -16,13 +16,17 @@
 import re
 import imp
 import os
-# from edgetpu.classification.engine import ClassificationEngine
 import gstreamer
 import numpy
 import signal
+import operator
 from PIL import Image
 from PIL import ImageDraw, ImageFont
 from typing import Tuple, Union
+from definitions import CONSTANTS
+import sys
+sys.path.append(os.path.abspath('/home/mendel/mnt/cameraSamples/examples-camera/'))
+from imprinting_classification.classify import Classifier
 
 try:
     from .VideoWriter import *
@@ -30,20 +34,6 @@ try:
 except Exception:  # ImportError
     from VideoWriter import *
     from FaceDetector import *
-
-class CONSTANTS:
-    # number of seconds that need to pass after which the video recording is stopped and the video saved to disk
-    NO_FACE_THRESHOLD_SEC = 5 # seconds
-    # number of seconds that need to pass for a pullup to be considered valid
-    # scope: false positive counts removal
-    MIN_SEC_PER_PULLUP = 1
-
-    class RECORD_STATUS:
-        OFF, JUST_STARTED, ON, JUST_STOPPED, *_ = range(10)
-        POSITIVE_STATS = [JUST_STARTED, ON]
-        NEGATIVE_STATS = [JUST_STOPPED, OFF]
-
-    SAVE_FILE_NAME = "db.csv"
 
 class Main:
     def __init__(self):
@@ -56,8 +46,10 @@ class Main:
         self.recording_last_face_seen_timestamp = 0
 
         self.face_detector = FaceDetector(model_path='/home/mendel/mnt/cameraSamples/examples-camera/all_models/mobilenet_ssd_v2_face_quant_postprocess_edgetpu.tflite')
+        self.face_classifier = Classifier(using_model='/home/mendel/mnt/cameraSamples/examples-camera/imprinting_classification/retrained_imprinting_model.tflite',
+                                          label_file='/home/mendel/mnt/cameraSamples/examples-camera/imprinting_classification/retrained_imprinting_model.txt')
 
-        self.who = None
+        self.who = dict()
         self.counter = 0
         self.counter_up_down = False  # on off switch. False for human not visible (thus-down). True for face up.
         self.counting_prev_face_seen_timestamp = 0
@@ -109,22 +101,30 @@ class Main:
         return self.counter
 
     def _whothis(self, image_of_face: Image) -> str:
-        return "Octav"
+        who_prediction = self.face_classifier.classify(image=image_of_face, top_k=len(self.face_classifier.labels))
+        who_prediction = {str(k): v for k, v in who_prediction}
+        for k in who_prediction:
+            self.who[k] = self.who.get(k, 0.0) + who_prediction[k]
+        maxid = max(self.who.items(), key=operator.itemgetter(1))[0]
+        # print('who_now', who_prediction)
+        # print('who_all', self.who)
+        # print('who idx: ', maxid, int(maxid))
+        # print('labels:  ', self.face_classifier.labels)
 
     def _write_number_on_photo(self, image: Image, number: int):
         ImageDraw.Draw(image).text((10, 8),
                                    text=str(number),
                                    fill=(255, 0, 0),
-                                   font=ImageFont.truetype(font="OpenSans.ttf", size=24))
+                                   font=ImageFont.truetype(font=CONSTANTS.font_path, size=24))
 
     def _save(self, who: str, pullup_counts: int, evidence_path: str):
-        with open(CONSTANTS.SAVE_FILE_NAME, "a+") as track_file:
+        with open(CONSTANTS.db_path, "a+") as track_file:
             # when,who,how_many,evidence
             track_file.write('{},{},{},{}\n'.format(time.time(), who, pullup_counts, evidence_path))
 
     def _reset_session(self):
         self.counter = 0
-        self.who = None
+        self.who = dict()
 
     def _callback(self, image, svg_canvas):
         face_rois_in_image = self.face_detector.predict(image)
@@ -136,11 +136,10 @@ class Main:
                                                  face_rois_in_image=face_rois_in_image)
 
         if len(face_rois_in_image) > 0:
-            # TODO: ENSEMBLE predictions eventually
-            self.who = self._whothis(image_of_face=image.crop(face_rois_in_image[0]))
+            self._whothis(image_of_face=image.crop(face_rois_in_image[0]))
 
         if record_status == CONSTANTS.RECORD_STATUS.JUST_STOPPED:
-            self._save(who=self.who,
+            self._save(who=self.face_classifier.labels[int(max(self.who.items(), key=operator.itemgetter(1))[0])],
                        pullup_counts=self.counter,
                        evidence_path=video_path)
             self._reset_session()

@@ -4,6 +4,7 @@ import numpy as np
 import os
 from datetime import datetime
 import time
+import shutil
 
 
 class VideoWriter:
@@ -40,7 +41,18 @@ class VideoWriter:
 
         return self.video_writer
 
+    def _decide_clean_memory(self):
+        _, _, freeMem = shutil.disk_usage("/home/mendel/mnt")
+        if freeMem // (2**20) < 10:
+            all_backs_up = os.listdir('/home/mendel/mnt/resources/videos')
+            all_sorted_backs_up = sorted(all_backs_up, key=lambda x: os.path.getmtime(x))
+            while freeMem // (2**20) < 20 and len(all_sorted_backs_up) > 0:
+                shutil.rmtree(all_sorted_backs_up.pop(0))
+                _, _, freeMem = shutil.disk_usage("/home/mendel/mnt")
+
     def start_video_recording(self, image: np.array):
+        self._decide_clean_memory()
+
         video_shape = (image.shape[1], image.shape[0])
         self._init_video_writer_if_needed(video_shape)
         self.add_image(image)

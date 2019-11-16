@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pull-ups scores</title>
+</head>
+<body>
+    <table border = 1>
+        <tr>
+            <th>Date</th>
+            <th>Who</th>
+            <th>#</th>
+            <th>Evidence</th>
+        </tr>
+        {% for values in pullup_sessions %}
+        <tr>
+            {% for value in values[:-1] %}
+            <td> {{ value }} </td>
+            {% endfor %}
+            <td>
+                <a href="/videos/{{ values[-1] }}">{{ values[-1] }}</a>
+            </td>
+        </tr>
+        {% endfor %}
+      </table>
+</body>
+</html>

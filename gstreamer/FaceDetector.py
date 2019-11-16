@@ -11,11 +11,11 @@ class FaceDetector:
         self.engine = DetectionEngine(model_path)
 
     def predict(self, on_img:Image) -> List[List[int]]:
-        ans = self.engine.DetectWithImage(on_img,
-                                          threshold=0.05,
-                                          keep_aspect_ratio=False,
-                                          relative_coord=False,
-                                          top_k=10)
+        ans = self.engine.detect_with_image(on_img,
+                                            threshold=0.05,
+                                            keep_aspect_ratio=False,
+                                            relative_coord=False,
+                                            top_k=10)
         faces = []
 
         if ans:
