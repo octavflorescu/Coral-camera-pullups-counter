@@ -102,9 +102,14 @@ class Main:
 
     def _whothis(self, image_of_face: Image) -> str:
         who_prediction = self.face_classifier.classify(image=image_of_face, top_k=len(self.face_classifier.labels))
-        who_prediction = {str(k): v for k,v in who_prediction}
+        who_prediction = {str(k): v for k, v in who_prediction}
         for k in who_prediction:
-            self.who[k] = getattr(self.who, k, 0.0) + who_prediction[k]
+            self.who[k] = self.who.get(k, 0.0) + who_prediction[k]
+        maxid = max(self.who.items(), key=operator.itemgetter(1))[0]
+        # print('who_now', who_prediction)
+        # print('who_all', self.who)
+        # print('who idx: ', maxid, int(maxid))
+        # print('labels:  ', self.face_classifier.labels)
 
     def _write_number_on_photo(self, image: Image, number: int):
         ImageDraw.Draw(image).text((10, 8),
