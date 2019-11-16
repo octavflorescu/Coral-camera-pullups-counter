@@ -16,14 +16,17 @@
 import re
 import imp
 import os
-# from edgetpu.classification.engine import ClassificationEngine
 import gstreamer
 import numpy
 import signal
+import operator
 from PIL import Image
 from PIL import ImageDraw, ImageFont
 from typing import Tuple, Union
 from definitions import CONSTANTS
+import sys
+sys.path.append(os.path.abspath('/home/mendel/mnt/cameraSamples/examples-camera/'))
+from imprinting_classification.classify import Classifier
 
 try:
     from .VideoWriter import *
@@ -43,8 +46,10 @@ class Main:
         self.recording_last_face_seen_timestamp = 0
 
         self.face_detector = FaceDetector(model_path='/home/mendel/mnt/cameraSamples/examples-camera/all_models/mobilenet_ssd_v2_face_quant_postprocess_edgetpu.tflite')
+        self.face_classifier = Classifier(using_model='/home/mendel/mnt/cameraSamples/examples-camera/retrained_imprinting_model.tflite',
+                                          label_file='/home/mendel/mnt/cameraSamples/examples-camera/retrained_imprinting_model.txt')
 
-        self.who = None
+        self.who = dict()
         self.counter = 0
         self.counter_up_down = False  # on off switch. False for human not visible (thus-down). True for face up.
         self.counting_prev_face_seen_timestamp = 0
@@ -96,7 +101,10 @@ class Main:
         return self.counter
 
     def _whothis(self, image_of_face: Image) -> str:
-        return "???"
+        who_prediction = self.face_classifier.classify(image=image_of_face, top_k=len(self.face_classifier.labels))
+        who_prediction = {str(k): v for k,v in who_prediction}
+        for k in who_prediction:
+            self.who[k] = getattr(self.who, k, 0.0) + who_prediction[k]
 
     def _write_number_on_photo(self, image: Image, number: int):
         ImageDraw.Draw(image).text((10, 8),
@@ -111,7 +119,7 @@ class Main:
 
     def _reset_session(self):
         self.counter = 0
-        self.who = None
+        self.who = dict()
 
     def _callback(self, image, svg_canvas):
         face_rois_in_image = self.face_detector.predict(image)
@@ -123,11 +131,10 @@ class Main:
                                                  face_rois_in_image=face_rois_in_image)
 
         if len(face_rois_in_image) > 0:
-            # TODO: ENSEMBLE predictions eventually
-            self.who = self._whothis(image_of_face=image.crop(face_rois_in_image[0]))
+            self._whothis(image_of_face=image.crop(face_rois_in_image[0]))
 
         if record_status == CONSTANTS.RECORD_STATUS.JUST_STOPPED:
-            self._save(who=self.who,
+            self._save(who=self.face_classifier.labels[int(max(self.who.items(), key=operator.itemgetter(1))[0])],
                        pullup_counts=self.counter,
                        evidence_path=video_path)
             self._reset_session()
