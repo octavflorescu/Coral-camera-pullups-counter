@@ -12,7 +12,7 @@ And made a system to be able to change the angle of the camera and its height.
 
 ## Internal Env
 
-Needed to build and [install OpenCV](https://medium.com/@balaji_85683/installing-opencv-4-0-on-google-coral-dev-board-5c3a69d7f52f) in order to save to video. Also check out this guy's [comment](https://medium.com/@trentonfehl/if-youd-like-this-to-work-outside-of-the-virtual-environment-the-following-command-worked-for-me-f33bff3f2b3).
+Needed to build and [install OpenCV](https://medium.com/@balaji_85683/installing-opencv-4-0-on-google-coral-dev-board-5c3a69d7f52f) in order to save to video. Also check out this guy's [comment](https://medium.com/@trentonfehl/if-youd-like-this-to-work-outside-of-the-virtual-environment-the-following-command-worked-for-me-f33bff3f2b3).  
 Make sure to have the latest edgetpu version. [atm](https://coral.withgoogle.com/news/updates-07-2019/)
 
 ## Implementation
@@ -21,8 +21,12 @@ Make sure to have the latest edgetpu version. [atm](https://coral.withgoogle.com
 2. Used Face detector to identify faces on each received image.
 3. If any face is found, start a video session, until X (5-for now) seconds have passed without seeing any face.
 4. Count the **face is found** <-> **face is not found** transitions in order to get the count of all pullups.
-5. *TO BE DONE* Use Face detector's output to crop faces and classify between team members.
+5. Use Face detector's output to crop faces and classify between team members.  
+   Classification was implemented using Coral's weight imprinting. Checkout the bash script from imprinting_classification/imprint.sh for more details.  
 6. Save the classified team memeber's name, date, number of pullups, and evidence location (the video) to a csv.
+
+## Result:
+<img src="IMG_5658_low.jpg" width="33%"> <img src="IMG_5656_low.jpg" width="33%">
 
 # -- Google Coral --
 # Edge TPU simple camera examples
