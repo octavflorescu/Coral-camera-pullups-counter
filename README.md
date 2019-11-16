@@ -13,6 +13,7 @@ And made a system to be able to change the angle of the camera and its height.
 ## Internal Env
 
 Needed to build and [install OpenCV](https://medium.com/@balaji_85683/installing-opencv-4-0-on-google-coral-dev-board-5c3a69d7f52f) in order to save to video. Also check out this guy's [comment](https://medium.com/@trentonfehl/if-youd-like-this-to-work-outside-of-the-virtual-environment-the-following-command-worked-for-me-f33bff3f2b3).
+Make sure to have the latest edgetpu version. [atm](https://coral.withgoogle.com/news/updates-07-2019/)
 
 ## Implementation
 
