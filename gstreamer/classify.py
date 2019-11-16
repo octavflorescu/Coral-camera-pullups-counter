@@ -46,8 +46,8 @@ class Main:
         self.recording_last_face_seen_timestamp = 0
 
         self.face_detector = FaceDetector(model_path='/home/mendel/mnt/cameraSamples/examples-camera/all_models/mobilenet_ssd_v2_face_quant_postprocess_edgetpu.tflite')
-        self.face_classifier = Classifier(using_model='/home/mendel/mnt/cameraSamples/examples-camera/retrained_imprinting_model.tflite',
-                                          label_file='/home/mendel/mnt/cameraSamples/examples-camera/retrained_imprinting_model.txt')
+        self.face_classifier = Classifier(using_model='/home/mendel/mnt/cameraSamples/examples-camera/imprinting_classification/retrained_imprinting_model.tflite',
+                                          label_file='/home/mendel/mnt/cameraSamples/examples-camera/imprinting_classification/retrained_imprinting_model.txt')
 
         self.who = dict()
         self.counter = 0
