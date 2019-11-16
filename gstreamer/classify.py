@@ -23,6 +23,7 @@ import signal
 from PIL import Image
 from PIL import ImageDraw, ImageFont
 from typing import Tuple, Union
+from definitions import CONSTANTS
 
 try:
     from .VideoWriter import *
@@ -30,20 +31,6 @@ try:
 except Exception:  # ImportError
     from VideoWriter import *
     from FaceDetector import *
-
-class CONSTANTS:
-    # number of seconds that need to pass after which the video recording is stopped and the video saved to disk
-    NO_FACE_THRESHOLD_SEC = 5 # seconds
-    # number of seconds that need to pass for a pullup to be considered valid
-    # scope: false positive counts removal
-    MIN_SEC_PER_PULLUP = 1.0
-
-    class RECORD_STATUS:
-        OFF, JUST_STARTED, ON, JUST_STOPPED, *_ = range(10)
-        POSITIVE_STATS = [JUST_STARTED, ON]
-        NEGATIVE_STATS = [JUST_STOPPED, OFF]
-
-    SAVE_FILE_NAME = "db.csv"
 
 class Main:
     def __init__(self):
@@ -115,10 +102,10 @@ class Main:
         ImageDraw.Draw(image).text((10, 8),
                                    text=str(number),
                                    fill=(255, 0, 0),
-                                   font=ImageFont.truetype(font="OpenSans.ttf", size=24))
+                                   font=ImageFont.truetype(font=CONSTANTS.font_path, size=24))
 
     def _save(self, who: str, pullup_counts: int, evidence_path: str):
-        with open(CONSTANTS.SAVE_FILE_NAME, "a+") as track_file:
+        with open(CONSTANTS.db_path, "a+") as track_file:
             # when,who,how_many,evidence
             track_file.write('{},{},{},{}\n'.format(time.time(), who, pullup_counts, evidence_path))
 

@@ -52,7 +52,7 @@ class VideoWriter:
 
     def start_video_recording(self, image: np.array):
         self._decide_clean_memory()
-        
+
         video_shape = (image.shape[1], image.shape[0])
         self._init_video_writer_if_needed(video_shape)
         self.add_image(image)
