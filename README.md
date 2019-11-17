@@ -28,6 +28,10 @@ Make sure to have the latest edgetpu version. [atm](https://coral.withgoogle.com
 ## Result:
 <img src="IMG_5658_low.JPG" width="33%"> <img src="IMG_5656_low.JPG" width="33%">
 
+#### Improvements/TODOs:
+1. Use OpenCV to trigger face detection only when movement is detected.
+2. Switch from face classification using classification imprinting of weights to face recognition using embedding vectors' distance. This, in theory, would make it more flexible to adding more people.
+
 # -- Google Coral --
 # Edge TPU simple camera examples
 
