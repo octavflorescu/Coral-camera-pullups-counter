@@ -2,7 +2,7 @@
 
 This repo contains a fork of Google-coral's exemple projects from which i have deviated a program which identifies faces.  
 The scope of the app is to track how many pull-ups does each team member do.  
-The camera will be mounted on a pull-up bar. So it will see only faces of those who did a pullup.
+The camera will be mounted on a pull-up bar. So it will see only faces of those who did a pullup.  
 **All paths are hard coded**
 
 ## Hardware - the case
