@@ -9,7 +9,7 @@ The camera is mounted on a pull-up bar. So it will see only the faces of those w
 
 ## Hardware - the case
 
-I have printed [this](https://www.thingiverse.com/thing:3561461).  
+I have printed [this](https://www.thingiverse.com/thing:3561461) default case.  
 And made a system to be able to change the angle of the camera and its height.  
 <img src="IMG_4320_low.jpg" width="33%"> <img src="IMG_5646_low.jpg" width="33%">  
 
@@ -28,7 +28,7 @@ Make sure to have the latest edgetpu version. [atm](https://coral.withgoogle.com
    Classification was implemented using Coral's weight imprinting. Checkout the bash script from imprinting_classification/imprint.sh for more details.  
 6. Save the classified team memeber's name, date, number of pullups, and evidence location (the video) to a csv.
 
-#### Improvements/TODOs:
+## Improvements/TODOs:
 1. Use OpenCV to trigger face detection only when movement is detected.
 2. Switch from face classification using classification imprinting of weights to face recognition using embedding vectors' distance. This, in theory, would make it more flexible to adding more people.
 3. **All paths are hard coded**. Make them relative.
