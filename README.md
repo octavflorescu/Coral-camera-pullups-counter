@@ -2,8 +2,10 @@
 
 This repo contains a fork of Google-coral's exemple projects from which i have deviated a program which identifies faces.  
 The scope of the app is to track how many pull-ups does each team member do.  
-The camera will be mounted on a pull-up bar. So it will see only faces of those who did a pullup.  
-**All paths are hard coded**
+The camera is mounted on a pull-up bar. So it will see only the faces of those who did a full pullup.  
+<img src="IMG_5658_low.JPG" width="33%"> <img src="IMG_5656_low.JPG" width="33%">
+
+# Setup
 
 ## Hardware - the case
 
@@ -26,14 +28,12 @@ Make sure to have the latest edgetpu version. [atm](https://coral.withgoogle.com
    Classification was implemented using Coral's weight imprinting. Checkout the bash script from imprinting_classification/imprint.sh for more details.  
 6. Save the classified team memeber's name, date, number of pullups, and evidence location (the video) to a csv.
 
-## Result:
-<img src="IMG_5658_low.JPG" width="33%"> <img src="IMG_5656_low.JPG" width="33%">
-
 #### Improvements/TODOs:
 1. Use OpenCV to trigger face detection only when movement is detected.
 2. Switch from face classification using classification imprinting of weights to face recognition using embedding vectors' distance. This, in theory, would make it more flexible to adding more people.
+3. **All paths are hard coded**. Make them relative.
 
-# -- Google Coral --
+# -- Google Coral's readme --
 # Edge TPU simple camera examples
 
 This repo contains a collection of examples that use camera streams
