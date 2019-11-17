@@ -1,4 +1,4 @@
-# Fork from google-coral
+# Fork from google-coral/examples-camera
 
 This repo contains a fork of Google-coral's exemple projects from which i have deviated a program which identifies faces.  
 The scope of the app is to track how many pull-ups does each team member do.  
